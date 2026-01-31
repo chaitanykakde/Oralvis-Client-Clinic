@@ -1,0 +1,93 @@
+
+
+
+name: Deploy Node Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/node-backend:latest ./server
+
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/node-backend:latest
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull Image from Docker Hub
+        run: docker pull ${{ secrets.DOCKER_USERNAME }}/node-backend:latest
+
+      - name: Stop and Remove Old Container
+        run: |
+          docker stop node-app || true
+          docker rm node-app || true
+
+      - name: Run Docker Container
+        run: |
+          docker run -d \
+            --name node-app \
+            -p 4000:4000 \
+            --restart unless-stopped \
+            -e REDIS_HOST="172.17.0.1" \
+            -e AWS_ACCESS_KEY="${{ secrets.AWS_ACCESS_KEY }}" \
+            -e AWS_SECRET_KEY="${{ secrets.AWS_SECRET_KEY }}" \
+            -e AWS_REGION="${{ secrets.AWS_REGION }}" \
+            -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKET_NAME }}" \
+            -e TWILIO_ACCOUNT_SID="${{ secrets.TWILIO_ACCOUNT_SID }}" \
+            -e TWILIO_AUTH_TOKEN="${{ secrets.TWILIO_AUTH_TOKEN }}" \
+            -e TWILIO_VERIFY_SERVICE_SID="${{ secrets.TWILIO_VERIFY_SERVICE_SID }}" \
+            -e EMAIL_USER="${{ secrets.EMAIL_USER }}" \
+            -e EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}" \
+            -e TWILIO_WHATSAPP_FROM="${{ secrets.TWILIO_WHATSAPP_FROM }}" \
+            -e TWILIO_WHATSAPP_TEMPLATE_SID="${{ secrets.TWILIO_WHATSAPP_TEMPLATE_SID }}" \
+            -e TWILIO_WHATSAPP_TEMPLATE_2_SID="${{ secrets.TWILIO_WHATSAPP_TEMPLATE_2_SID }}" \
+            -e TWILIO_WHATSAPP_TEMPLATE_3_SID="${{ secrets.TWILIO_WHATSAPP_TEMPLATE_3_SID }}" \
+            -e CANCEL_TEMPLATE_SID="${{ secrets.CANCEL_TEMPLATE_SID }}" \
+            -e TWILIO_CLINIC_TEMPLATE_SID="${{ secrets.TWILIO_CLINIC_TEMPLATE_SID }}" \
+            -e TWILIO_CLINIC_APPROVAL_TEMPLATE_SID="${{ secrets.TWILIO_CLINIC_APPROVAL_TEMPLATE_SID }}" \
+            -e ACCESS_TOKEN_SECRET="${{ secrets.ACCESS_TOKEN_SECRET }}" \
+            -e REFRESH_TOKEN_SECRET="${{ secrets.REFRESH_TOKEN_SECRET }}" \
+            -e KEY_ID="${{ secrets.KEY_ID }}" \
+            -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+            -e KEY_SECRET="${{ secrets.KEY_SECRET }}" \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            ${{ secrets.DOCKER_USERNAME }}/node-backend:latest
+
+      - name: Verify Container Started
+        run: |
+          sleep 5
+          if ! docker ps | grep -q node-app; then
+            echo "❌ Container failed to start!"
+            docker logs node-app || true
+            exit 1
+          fi
+          echo "✅ Container started successfully!"
+
+      - name: Health Check
+        run: |
+          echo "Performing health check..."
+          for i in {1..10}; do
+            if curl -f http://localhost:4000/health 2>/dev/null || curl -f http://localhost:4000/ 2>/dev/null; then
+              echo "✅ Application is healthy!"
+              exit 0
+            fi
+            echo "⏳ Waiting for application to start... Attempt $i/10"
+            sleep 10
+          done
+          echo "❌ Health check failed!"
+          docker logs node-app --tail 50
+          exit 1

@@ -1,0 +1,16 @@
+FROM node:alpine3.18
+RUN apk add --no-cache \
+    python3 \
+    py3-pip \
+    build-base \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev \
+    giflib-dev
+WORKDIR /app
+COPY package.json ./
+RUN npm install
+COPY . .
+EXPOSE 4000
+RUN npm install -g pm2
+CMD ["pm2-runtime", "server.js"]
