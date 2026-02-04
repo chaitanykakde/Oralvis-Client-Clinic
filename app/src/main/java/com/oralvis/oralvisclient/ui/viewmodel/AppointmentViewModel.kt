@@ -1,5 +1,6 @@
 package com.oralvis.oralvisclient.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oralvis.oralvisclient.core.network.ApiResult
@@ -42,11 +43,18 @@ class AppointmentViewModel(
 
     fun loadAppointments(clinicId: String) {
         viewModelScope.launch {
+            Log.d(TAG, "loadAppointments: clinicId=$clinicId")
             _appointmentsState.value = UiState.Loading
             withContext(dispatcherProvider.io) {
                 when (val result = getAppointmentsUseCase(clinicId)) {
-                    is ApiResult.Success -> _appointmentsState.value = UiState.Success(result.data)
-                    is ApiResult.Error -> _appointmentsState.value = UiState.Error(result.message)
+                    is ApiResult.Success -> {
+                        Log.d(TAG, "loadAppointments: success, count=${result.data.size}")
+                        _appointmentsState.value = UiState.Success(result.data)
+                    }
+                    is ApiResult.Error -> {
+                        Log.e(TAG, "loadAppointments: error=${result.message}")
+                        _appointmentsState.value = UiState.Error(result.message)
+                    }
                 }
             }
         }
@@ -110,5 +118,9 @@ class AppointmentViewModel(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val TAG = "AppointmentViewModel"
     }
 }

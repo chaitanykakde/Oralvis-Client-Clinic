@@ -1,5 +1,6 @@
 package com.oralvis.oralvisclient.data.repository
 
+import android.util.Log
 import com.oralvis.oralvisclient.core.network.ApiResult
 import com.oralvis.oralvisclient.core.network.safeApiCall
 import com.oralvis.oralvisclient.data.remote.ClinicApi
@@ -64,13 +65,24 @@ class ClinicRepositoryImpl(private val clinicApi: ClinicApi) : ClinicRepository 
         }
     }
 
-    override suspend fun getAppointments(clinicId: String): ApiResult<List<Booking>> = safeApiCall {
-        clinicApi.getAppointments(clinicId)
-    }.let { result ->
-        when (result) {
-            is ApiResult.Success -> ApiResult.Success(result.data.map { it.toDomain(clinicId) })
-            is ApiResult.Error -> result
+    override suspend fun getAppointments(clinicId: String): ApiResult<List<Booking>> {
+        Log.d(TAG, "getAppointments: calling API for clinicId=$clinicId")
+        return safeApiCall { clinicApi.getAppointments(clinicId) }.let { result ->
+            when (result) {
+                is ApiResult.Success -> {
+                    Log.d(TAG, "getAppointments: API success, count=${result.data.size}")
+                    ApiResult.Success(result.data.map { it.toDomain(clinicId) })
+                }
+                is ApiResult.Error -> {
+                    Log.e(TAG, "getAppointments: API error=${result.message}")
+                    result
+                }
+            }
         }
+    }
+
+    private companion object {
+        const val TAG = "ClinicRepositoryImpl"
     }
 
     override suspend fun getBookingsByDate(clinicId: String, date: String): ApiResult<List<Booking>> = safeApiCall {

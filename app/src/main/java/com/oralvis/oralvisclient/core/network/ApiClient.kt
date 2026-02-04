@@ -16,9 +16,9 @@ object ApiClient {
 
     private val cookieJar = CookieJarImpl()
 
+    // Omit null fields so login sends only phoneNo+password or email+password (backend validation fails on "email":null).
     private val gson = GsonBuilder()
         .setLenient()
-        .serializeNulls()
         .create()
 
     /** Client used only for refresh-token call (no AuthInterceptor to avoid loop). */
@@ -36,7 +36,7 @@ object ApiClient {
             .build()
     }
 
-    private val authInterceptor = AuthInterceptor(refreshOkHttpClient, NetworkConstants.BASE_URL)
+    private val authInterceptor = AuthInterceptor(refreshOkHttpClient, BuildConfig.BASE_URL)
 
     val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -55,7 +55,7 @@ object ApiClient {
 
     val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(NetworkConstants.BASE_URL)
+            .baseUrl(BuildConfig.BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()

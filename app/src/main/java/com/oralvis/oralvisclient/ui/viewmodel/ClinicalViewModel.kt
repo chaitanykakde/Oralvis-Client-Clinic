@@ -7,6 +7,7 @@ import com.oralvis.oralvisclient.core.util.DispatcherProvider
 import com.oralvis.oralvisclient.core.util.UiState
 import com.oralvis.oralvisclient.domain.model.ClinicalRecord
 import com.oralvis.oralvisclient.domain.model.MedicalHistoryEntry
+import com.oralvis.oralvisclient.domain.repository.UploadedFile
 import com.oralvis.oralvisclient.domain.usecase.GetClinicalRecordUseCase
 import com.oralvis.oralvisclient.domain.usecase.SaveClinicalRecordUseCase
 import com.oralvis.oralvisclient.domain.repository.ClinicalRepository
@@ -31,6 +32,12 @@ class ClinicalViewModel(
 
     private val _medicalHistoryState = MutableStateFlow<UiState<List<MedicalHistoryEntry>>>(UiState.Loading)
     val medicalHistoryState: StateFlow<UiState<List<MedicalHistoryEntry>>> = _medicalHistoryState.asStateFlow()
+
+    private val _uploadFileState = MutableStateFlow<UiState<UploadedFile>>(UiState.Loading)
+    val uploadFileState: StateFlow<UiState<UploadedFile>> = _uploadFileState.asStateFlow()
+
+    private val _uploadPrescriptionState = MutableStateFlow<UiState<String>>(UiState.Loading)
+    val uploadPrescriptionState: StateFlow<UiState<String>> = _uploadPrescriptionState.asStateFlow()
 
     fun loadClinicalRecord(bookingId: String) {
         viewModelScope.launch {
@@ -78,6 +85,30 @@ class ClinicalViewModel(
                 when (val result = clinicalRepository.getMedicalHistory(clinicId, patientId, walkinPatientId)) {
                     is ApiResult.Success -> _medicalHistoryState.value = UiState.Success(result.data)
                     is ApiResult.Error -> _medicalHistoryState.value = UiState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun uploadFile(bookingId: String, file: java.io.File) {
+        viewModelScope.launch {
+            _uploadFileState.value = UiState.Loading
+            withContext(dispatcherProvider.io) {
+                when (val result = clinicalRepository.uploadFile(bookingId, file)) {
+                    is ApiResult.Success -> _uploadFileState.value = UiState.Success(result.data)
+                    is ApiResult.Error -> _uploadFileState.value = UiState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun uploadPrescriptionImage(bookingId: String, file: java.io.File, prescriptionIndex: Int? = null) {
+        viewModelScope.launch {
+            _uploadPrescriptionState.value = UiState.Loading
+            withContext(dispatcherProvider.io) {
+                when (val result = clinicalRepository.uploadPrescriptionImage(bookingId, file, prescriptionIndex)) {
+                    is ApiResult.Success -> _uploadPrescriptionState.value = UiState.Success(result.data)
+                    is ApiResult.Error -> _uploadPrescriptionState.value = UiState.Error(result.message)
                 }
             }
         }

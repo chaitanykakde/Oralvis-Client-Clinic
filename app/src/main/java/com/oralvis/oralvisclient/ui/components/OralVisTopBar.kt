@@ -2,6 +2,7 @@ package com.oralvis.oralvisclient.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,36 +42,53 @@ fun OralVisTopBar(
             .fillMaxWidth()
             .background(OralVisPrimary)
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
                     start = OralVisDimensions.Four,
                     end = OralVisDimensions.Four,
                     top = OralVisDimensions.Three,
-                    bottom = OralVisDimensions.Three
-                ),
-            verticalAlignment = Alignment.CenterVertically
+                    bottom = if (showTabs && tabTitles.isNotEmpty()) OralVisDimensions.Two else OralVisDimensions.Three
+                )
         ) {
-            OralVisLogo(modifier = Modifier.size(40.dp))
-            Spacer(modifier = Modifier.width(OralVisDimensions.Two))
-            Text(
-                text = "OralVis",
-                color = OralVisOnPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
+            // Logo + title row
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OralVisLogo(modifier = Modifier.size(40.dp))
+                Spacer(modifier = Modifier.width(OralVisDimensions.Two))
+                Text(
+                    text = "OralVis",
+                    color = OralVisOnPrimary,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Centered horizontal tabs below the logo, WhatsApp-style
             if (showTabs && tabTitles.size >= 2) {
-                Spacer(modifier = Modifier.weight(1f))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    tabTitles.forEachIndexed { index, title ->
-                        OralVisTab(
-                            title = title,
-                            selected = index == activeTabIndex,
-                            onClick = { onTabSelected(index) }
-                        )
-                        if (index < tabTitles.lastIndex) Spacer(modifier = Modifier.width(OralVisDimensions.Three))
+                Spacer(modifier = Modifier.height(OralVisDimensions.Two))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        tabTitles.forEachIndexed { index, title ->
+                            OralVisTab(
+                                title = title,
+                                selected = index == activeTabIndex,
+                                onClick = { onTabSelected(index) }
+                            )
+                            if (index < tabTitles.lastIndex) {
+                                Spacer(modifier = Modifier.width(OralVisDimensions.Three))
+                            }
+                        }
                     }
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -100,25 +118,26 @@ private fun OralVisTab(
     selected: Boolean,
     onClick: () -> Unit
 ) {
-    androidx.compose.foundation.layout.Column(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clickable(onClick = onClick)
             .padding(horizontal = OralVisDimensions.Two, vertical = OralVisDimensions.One)
     ) {
-            Text(
-                text = title,
-                color = OralVisOnPrimary.copy(alpha = if (selected) 1f else 0.7f),
-                fontSize = 14.sp,
-                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        Text(
+            text = title,
+            color = OralVisOnPrimary.copy(alpha = if (selected) 1f else 0.7f),
+            fontSize = 14.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+        )
+        if (selected) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Box(
+                modifier = Modifier
+                    .height(2.dp)
+                    .fillMaxWidth()
+                    .background(OralVisOnPrimary)
             )
-            if (selected) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Box(
-                    modifier = Modifier
-                        .height(2.dp)
-                        .fillMaxWidth()
-                        .background(OralVisOnPrimary)
-                )
-            }
         }
+    }
 }

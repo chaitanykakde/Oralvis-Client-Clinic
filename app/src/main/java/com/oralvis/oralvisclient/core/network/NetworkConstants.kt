@@ -1,11 +1,10 @@
 package com.oralvis.oralvisclient.core.network
 
 /**
- * Central place for API base URL and path prefixes.
- * Backend uses port 4000; replace host for staging/production.
+ * Central place for API path prefixes and auth cookie names.
+ * Base URL comes from BuildConfig.BASE_URL (debug: local, release: production).
  */
 object NetworkConstants {
-    const val BASE_URL = "https://your-api-host:4000/"
     const val API_PREFIX = "api"
 
     object Auth {

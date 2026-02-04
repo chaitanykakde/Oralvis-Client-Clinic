@@ -1,5 +1,7 @@
 package com.oralvis.oralvisclient.di
 
+import android.util.Log
+import com.oralvis.oralvisclient.core.network.ApiResult
 import com.oralvis.oralvisclient.core.network.ApiClient
 import com.oralvis.oralvisclient.core.session.SessionManager
 import com.oralvis.oralvisclient.core.util.DefaultDispatcherProvider
@@ -95,6 +97,27 @@ object AppGraph {
     private val saveClinicalRecordUseCase by lazy { SaveClinicalRecordUseCase(clinicalRepository) }
 
     fun sessionManager(): SessionManager = sessionManager
+
+    /**
+     * Call on app start: fetches /api/me, resolves clinicId via /api/clinics/clinic-id/:userId,
+     * stores user and clinicId in SessionManager.
+     */
+    suspend fun initSession() {
+        Log.d("AppGraph", "initSession: calling /api/me")
+        when (val userResult = getCurrentUserUseCase()) {
+            is ApiResult.Success -> {
+                Log.d("AppGraph", "initSession: /api/me success, userId=${userResult.data.id}")
+                when (val clinicResult = resolveClinicIdUseCase(userResult.data.id)) {
+                    is ApiResult.Success -> {
+                        Log.d("AppGraph", "initSession: clinicId resolved=${clinicResult.data}")
+                        sessionManager.setClinicId(clinicResult.data)
+                    }
+                    else -> Log.w("AppGraph", "initSession: resolve clinicId failed")
+                }
+            }
+            else -> Log.w("AppGraph", "initSession: /api/me failed or not logged in")
+        }
+    }
 
     fun createAuthViewModel(): AuthViewModel = AuthViewModel(
         loginUseCase = loginUseCase,

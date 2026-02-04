@@ -16,10 +16,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // BASE_URL set per build type below (debug vs release)
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"https://oralvis.com/\"")
+        }
         release {
+            buildConfigField("String", "BASE_URL", "\"https://oralvis.com/\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

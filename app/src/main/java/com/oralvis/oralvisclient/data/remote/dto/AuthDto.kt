@@ -14,7 +14,7 @@ data class LoginResponse(
 )
 
 data class UserDto(
-    @SerializedName("_id") val id: String,
+    @SerializedName("_id") val id: String? = null,
     @SerializedName("id") val idAlt: String? = null,
     @SerializedName("name") val name: String,
     @SerializedName("phoneNo") val phoneNo: String,
@@ -25,7 +25,8 @@ data class UserDto(
     @SerializedName("clinicId") val clinicId: String? = null,
     @SerializedName("clinics") val clinics: List<String>? = null
 ) {
-    fun resolvedId(): String = id.ifBlank { idAlt.orEmpty() }
+    /** Backend may send "_id" (Mongo) or "id"; accept both. */
+    fun resolvedId(): String = (id?.takeIf { it.isNotBlank() } ?: idAlt).orEmpty()
 }
 
 data class RefreshResponse(
