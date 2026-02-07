@@ -1,5 +1,6 @@
 package com.oralvis.oralvisclient
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,13 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.Image
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,8 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.sp
+import com.oralvis.oralvisclient.R
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -53,7 +58,6 @@ import com.oralvis.oralvisclient.ui.components.FloatingBottomNav
 import com.oralvis.oralvisclient.ui.navigation.NavRoutes
 import com.oralvis.oralvisclient.ui.screens.AppointmentDetailsScreen
 import com.oralvis.oralvisclient.ui.screens.AppointmentFormScreen
-import com.oralvis.oralvisclient.ui.screens.CalendarScreen
 import com.oralvis.oralvisclient.ui.screens.HomeScreen
 import com.oralvis.oralvisclient.ui.screens.PatientDetailsScreen
 import com.oralvis.oralvisclient.ui.screens.PatientsListScreen
@@ -65,12 +69,15 @@ import com.oralvis.oralvisclient.ui.screens.SelectBookingScreen
 import com.oralvis.oralvisclient.ui.screens.SummaryScreen
 import com.oralvis.oralvisclient.ui.theme.OralVisOnPrimary
 import com.oralvis.oralvisclient.ui.theme.OralVisPrimary
+import com.oralvis.oralvisclient.ui.theme.OralVisTabInactive
+import com.oralvis.oralvisclient.ui.theme.OralVisTopAppBarBlue
 import com.oralvis.oralvisclient.ui.theme.OralvisClientTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.oralvis.oralvisclient.core.util.UiState
 import androidx.compose.material.icons.Icons
@@ -126,41 +133,30 @@ private fun OralVisApp(viewModelFactory: OralVisViewModelFactory) {
         modifier = Modifier.fillMaxSize(),
         topBar = {
             if (isLoggedIn) {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    TopAppBar(
+                Column(modifier = Modifier.fillMaxWidth().background(OralVisTopAppBarBlue)) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = OralVisPrimary,
-                            titleContentColor = OralVisOnPrimary,
-                            navigationIconContentColor = OralVisOnPrimary
-                        ),
-                        windowInsets = WindowInsets.statusBars,
-                        title = {},
-                        navigationIcon = {
-                            Box(
-                                modifier = Modifier
-                                    .padding(start = 16.dp)
-                                    .size(32.dp)
-                                    .clip(CircleShape),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "O",
-                                    color = OralVisOnPrimary,
-                                    fontSize = 20.sp
-                                )
-                            }
-                        }
-                    )
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .padding(top = 12.dp, bottom = 16.dp, start = 16.dp, end = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.oralvisapplogo),
+                            contentDescription = "OralVis",
+                            modifier = Modifier
+                                .height(48.dp)
+                                .width(180.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
 
                     TabRow(
                         selectedTabIndex = topBarTabIndex,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(44.dp),
-                        containerColor = OralVisPrimary,
+                        containerColor = OralVisTopAppBarBlue,
                         indicator = { tabPositions ->
                             if (tabPositions.isNotEmpty() && topBarTabIndex in tabPositions.indices) {
                                 val pos = tabPositions[topBarTabIndex]
@@ -169,7 +165,7 @@ private fun OralVisApp(viewModelFactory: OralVisViewModelFactory) {
                                         .offset(x = pos.left, y = 42.dp)
                                         .width(pos.width)
                                         .height(2.dp)
-                                        .background(OralVisOnPrimary)
+                                        .background(Color(0xFFB3D7F0))
                                 )
                             }
                         },
@@ -190,7 +186,8 @@ private fun OralVisApp(viewModelFactory: OralVisViewModelFactory) {
                                 text = {
                                     Text(
                                         text = title,
-                                        color = if (selected) OralVisOnPrimary else OralVisOnPrimary.copy(alpha = 0.6f)
+                                        color = if (selected) OralVisOnPrimary else OralVisTabInactive,
+                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
                             )
@@ -201,11 +198,16 @@ private fun OralVisApp(viewModelFactory: OralVisViewModelFactory) {
         },
         bottomBar = {
             if (isLoggedIn) {
+                val context = LocalContext.current
                 FloatingBottomNav(
                     items = bottomNavItems,
                     currentRoute = resolveBottomNavRoute(currentRoute),
                     onItemClick = { route ->
                         when (route) {
+                            NavRoutes.Calendar -> {
+                                context.startActivity(Intent(context, CalendarActivity::class.java))
+                                return@FloatingBottomNav
+                            }
                             NavRoutes.Home -> topBarTabIndex = 0
                             NavRoutes.Summary -> topBarTabIndex = 1
                             else -> { }
@@ -243,12 +245,13 @@ private fun OralVisApp(viewModelFactory: OralVisViewModelFactory) {
                     )
                 }
                 composable(NavRoutes.Home) {
+                    val context = LocalContext.current
                     HomeScreen(
                         viewModel = viewModel(factory = viewModelFactory),
                         appointmentViewModel = viewModel(factory = viewModelFactory),
                         clinicId = clinicId,
                         userName = AppGraph.sessionManager().getCurrentUser()?.name ?: "",
-                        onNavigateToCalendar = { navController.navigate(NavRoutes.Calendar) },
+                        onNavigateToCalendar = { context.startActivity(Intent(context, CalendarActivity::class.java)) },
                         onNavigateToPatients = { navController.navigate(NavRoutes.Patients) },
                         onNavigateToAppointmentDetails = { id -> navController.navigate(NavRoutes.appointmentDetails(id)) },
                         onNavigateToAddPatient = { navController.navigate(NavRoutes.AppointmentForm) }
@@ -280,16 +283,6 @@ private fun OralVisApp(viewModelFactory: OralVisViewModelFactory) {
                         timeSlot = null,
                         onBook = { },
                         onMoreClick = { }
-                    )
-                }
-                composable(NavRoutes.Calendar) {
-                    var selectedDate by remember { mutableStateOf<String?>(null) }
-                    CalendarScreen(
-                        viewModel = viewModel(factory = viewModelFactory),
-                        clinicId = clinicId,
-                        selectedDate = selectedDate,
-                        onDateSelected = { selectedDate = it },
-                        onAppointmentClick = { id -> navController.navigate(NavRoutes.appointmentDetails(id)) }
                     )
                 }
                 composable(

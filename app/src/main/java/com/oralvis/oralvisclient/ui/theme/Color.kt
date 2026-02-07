@@ -4,6 +4,16 @@ import androidx.compose.ui.graphics.Color
 
 // OralVis primary palette (blue/teal from designs)
 val OralVisPrimary = Color(0xFF428DBC)
+
+// Screenshot-exact: top app bar dark blue
+val OralVisTopAppBarBlue = Color(0xFF2C678A)
+
+// Screenshot-exact: inactive tab text
+val OralVisTabInactive = Color(0xFFBBBBBB)
+
+// Screenshot-exact: patient list card background
+val OralVisPatientCardBg = Color(0xFFF0F0F0)
+
 val OralVisPrimaryDark = Color(0xFF2E6A8E)
 val OralVisPrimaryLight = Color(0xFF6BA8D9)
 
@@ -27,6 +37,10 @@ val OralVisChipBackground = Color(0xFFE3F2FD)
 val OralVisCalendarBackground = Color(0xFFE8F4FC)
 val OralVisCalendarSelected = Color(0xFFB3D7F0)
 val OralVisCalendarOtherMonth = Color(0xFF90A4AE)
+val OralVisCalendarHeaderBlue = Color(0xFF4C7D9B)
+val OralVisAgendaBackground = Color(0xFFFAFAF8)
+val OralVisTimelineLine = Color(0xFFE0E0E0)
+val OralVisCompletedTeal = Color(0xFF3F8F90)
 
 // Gradient (for buttons)
 val OralVisGradientStart = Color(0xFF428DBC)
